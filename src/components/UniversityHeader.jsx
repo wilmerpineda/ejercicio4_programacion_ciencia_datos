@@ -1,10 +1,12 @@
 export default function UniversityHeader() {
+  const logoUrl = `${import.meta.env.BASE_URL}branding/logo_santoto.png`
+
   return (
     <header className="usta-header">
       <div className="usta-header__content">
         <div className="usta-header__brand">
           <img
-            src="/branding/logo_santoto.png"
+            src={logoUrl}
             alt="Universidad Santo Tomás"
             className="usta-header__logo"
           />
