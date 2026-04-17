@@ -4,9 +4,10 @@ import { evaluateCode } from './evaluator'
 import UniversityHeader from './components/UniversityHeader'
 
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL || ''
+const MAX_ATTEMPTS = 5
 
 function getAttemptKey(email) {
-  return `oop_attempt_used_${email.trim().toLowerCase()}`
+  return `oop_attempt_count_${email.trim().toLowerCase()}`
 }
 
 async function submitAttempt(payload) {
@@ -55,25 +56,26 @@ export default function App() {
   const [isStarted, setIsStarted] = useState(false)
   const [code, setCode] = useState('')
   const [result, setResult] = useState(null)
-  const [attemptUsed, setAttemptUsed] = useState(false)
+  const [attemptCount, setAttemptCount] = useState(0)
   const [submittedCode, setSubmittedCode] = useState('')
   const [sending, setSending] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null)
 
   const normalizedEmail = email.trim().toLowerCase()
+  const attemptUsed = attemptCount >= MAX_ATTEMPTS
 
   useEffect(() => {
     if (!normalizedEmail) {
-      setAttemptUsed(false)
+      setAttemptCount(0)
       setSubmittedCode('')
       return
     }
 
     const attemptKey = getAttemptKey(normalizedEmail)
-    const storedAttempt = localStorage.getItem(attemptKey)
+    const storedCount = Number(localStorage.getItem(attemptKey) || '0')
     const storedCode = localStorage.getItem(`${attemptKey}_code`) || ''
 
-    setAttemptUsed(storedAttempt === 'true')
+    setAttemptCount(storedCount)
     setSubmittedCode(storedCode)
   }, [normalizedEmail])
 
@@ -121,10 +123,12 @@ export default function App() {
 
       if (submitResult.ok) {
         const attemptKey = getAttemptKey(normalizedEmail)
-        localStorage.setItem(attemptKey, 'true')
+        const newCount = attemptCount + 1
+
+        localStorage.setItem(attemptKey, String(newCount))
         localStorage.setItem(`${attemptKey}_code`, code)
 
-        setAttemptUsed(true)
+        setAttemptCount(newCount)
         setSubmittedCode(code)
       }
     } catch (error) {
@@ -157,9 +161,9 @@ que entregues. Esas pruebas utilizarán más datos, más escenarios y validacion
 con el objetivo de evaluar la robustez completa de tu solución.
 
 Importante:
-- Solo dispones de un intento en esta plataforma.
+- Dispones de hasta ${MAX_ATTEMPTS} intentos en esta plataforma.
 - El correo electrónico será usado como identificador para generar tu versión del ejercicio.
-- Una vez uses el intento, la evaluación automática quedará cerrada para este correo en este navegador.`}
+- Una vez alcances el límite de intentos, la evaluación automática quedará cerrada para este correo en este navegador.`}
           </div>
 
           <div style={{ marginTop: '1rem' }}>
@@ -176,11 +180,10 @@ Importante:
 
           {normalizedEmail && attemptUsed && (
             <div className="result-box" style={{ marginTop: '1rem' }}>
-              <h4>Intento ya utilizado</h4>
+              <h4>Límite de intentos alcanzado</h4>
               <p>
-                Para este correo ya aparece un intento registrado en este navegador.
-                El ejercicio seguirá siendo el mismo, pero la evaluación automática
-                ya no podrá enviarse nuevamente.
+                Para este correo ya se alcanzó el número máximo de intentos permitidos en este navegador.
+                El ejercicio seguirá siendo el mismo, pero la evaluación automática ya no podrá enviarse nuevamente.
               </p>
             </div>
           )}
@@ -247,9 +250,8 @@ y mayor cantidad de datos para verificar la solidez completa de la implementaci�
       <section className="panel">
         <h3>Escribe tu solución</h3>
         <p>
-          Completa la implementación de la clase. Cuando uses el botón de evaluación,
-          la plataforma registrará tu intento y no permitirá uno adicional para este correo
-          en este navegador.
+          Completa la implementación de la clase. Cada envío exitoso consumirá un intento.
+          Intentos usados: <strong>{attemptCount}</strong> de <strong>{MAX_ATTEMPTS}</strong>.
         </p>
 
         <textarea
@@ -267,7 +269,7 @@ y mayor cantidad de datos para verificar la solidez completa de la implementaci�
             disabled={attemptUsed || !code.trim() || sending}
           >
             {attemptUsed
-              ? 'Intento ya utilizado'
+              ? 'Límite de intentos alcanzado'
               : sending
               ? 'Enviando...'
               : 'Evaluar código'}
@@ -284,10 +286,10 @@ y mayor cantidad de datos para verificar la solidez completa de la implementaci�
 
       {attemptUsed && !result && (
         <section className="panel">
-          <h3>Intento cerrado</h3>
+          <h3>Intentos cerrados</h3>
           <p>
-            Ya se utilizó el intento automático para este correo en este navegador.
-            La solución mostrada arriba corresponde al código guardado localmente.
+            Ya alcanzaste el número máximo de intentos permitidos para este correo en este navegador.
+            La solución mostrada arriba corresponde al último código guardado localmente.
           </p>
         </section>
       )}
