@@ -29,7 +29,7 @@ La evaluación está dividida en dos partes:
 - GitHub Pages
 
 ## Estructura del proyecto
-v
+
 
 ```text
 .
